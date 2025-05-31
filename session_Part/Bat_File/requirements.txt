@@ -2,3 +2,5 @@ flask>=1.1
 peewee
 requests
 click
+pytest
+pytest-flask

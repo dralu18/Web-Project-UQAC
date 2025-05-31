@@ -7,6 +7,8 @@ from services import fetch_and_store_products
 from ErrorMessage import *
 import json
 
+from session_Part.Models.Shipping_information import Shipping_information
+
 app = Flask(__name__)
 
 @app.cli.command("init-db")
@@ -118,7 +120,9 @@ def update_order(order_id):
 
     # Stocker shipping_information comme JSON string
     order.email = email
-    order.shipping_information = json.dumps(shipping_info)
+    shipping_information = Shipping_information(json.dumps(shipping_info))
+    shipping_information.save()
+    order.shipping_information = shipping_information.id
 
     # Calcul prix total + taxes + expédition
     product = order.product

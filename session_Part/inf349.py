@@ -3,6 +3,7 @@ from flask import Flask, jsonify, request, redirect, url_for
 from db import db
 from Models.Product import Product
 from Models.Order import Order
+from Models.Shipping_information import Shipping_information
 from services import fetch_and_store_products
 from ErrorMessage import *
 import json
@@ -12,7 +13,7 @@ app = Flask(__name__)
 @app.cli.command("init-db")
 def init_db():
     db.connect()
-    db.create_tables([Product, Order])
+    db.create_tables([Product, Order, Shipping_information])
     fetch_and_store_products()
     click.echo("Base de données initialisée avec succès.")
 
@@ -58,7 +59,7 @@ def create_order():
     if not product.in_stock:
         return Error422ProductOutOfInventory
 
-    order = Order.create(product=product, quantity=quantity)
+    order = Order.create(product=product, quantity=quantity, shipping_price=product.price)
     return redirect(f"/order/{order.id}", code=302)
 
 @app.route("/order/<int:order_id>", methods=["GET"])
@@ -75,7 +76,7 @@ def get_order(order_id):
             "total_price_tax": order.total_price_tax,
             "email": order.email,
             "credit_card": json.loads(order.credit_card) if order.credit_card else {},
-            "shipping_information": json.loads(order.shipping_information) if order.shipping_information else {},
+            "shipping_information": Shipping_information.get(Shipping_information.id == order.shipping_information).load_object_to_json() if order.shipping_information != None else {},
             "transaction": json.loads(order.transaction) if order.transaction else {},
             "paid": order.paid,
             "product": {
@@ -118,7 +119,10 @@ def update_order(order_id):
 
     # Stocker shipping_information comme JSON string
     order.email = email
-    order.shipping_information = json.dumps(shipping_info)
+    new_shipping_information = Shipping_information(shipping_info)
+    new_shipping_information.save()
+    order.shipping_information = new_shipping_information.id
+    #order.shipping_information = json.dumps(shipping_info)
 
     # Calcul prix total + taxes + expédition
     product = order.product
@@ -137,7 +141,7 @@ def update_order(order_id):
     order.shipping_price = shipping_price
 
     # Taxe selon province
-    province = shipping_info["province"]
+    province = new_shipping_information.province
     taxes = {
         "QC": 0.15,
         "ON": 0.13,
@@ -154,7 +158,7 @@ def update_order(order_id):
         "order": {
             "id": order.id,
             "email": order.email,
-            "shipping_information": json.loads(order.shipping_information),
+            "shipping_information": new_shipping_information.load_object_to_json(),
             "credit_card": json.loads(order.credit_card) if order.credit_card else {},
             "transaction": json.loads(order.transaction) if order.transaction else {},
             "paid": order.paid,
