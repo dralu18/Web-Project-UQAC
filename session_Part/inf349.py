@@ -69,23 +69,7 @@ def get_order(order_id):
     except Order.DoesNotExist:
         return {"error": "Commande non trouvée"}, 404
 
-    return {
-        "order": {
-            "id": order.id,
-            "total_price": order.total_price,
-            "total_price_tax": order.total_price_tax,
-            "email": order.email,
-            "credit_card": json.loads(order.credit_card) if order.credit_card else {},
-            "shipping_information": Shipping_information.get(Shipping_information.id == order.shipping_information).load_object_to_json() if order.shipping_information != None else {},
-            "transaction": json.loads(order.transaction) if order.transaction else {},
-            "paid": order.paid,
-            "product": {
-            "id": order.product.id,
-            "quantity": order.quantity
-        },
-        "shipping_price": order.shipping_price
-    }
-}, 200
+    return order.load_object_to_json() , 200
 
 @app.route("/order/<int:order_id>", methods=["PUT"])
 def update_order(order_id):
@@ -108,21 +92,12 @@ def update_order(order_id):
     ]
 
     if not email or not shipping_info or missing_fields:
-        return {
-            "errors": {
-                "order": {
-                    "code": "missing-fields",
-                    "name": "Il manque un ou plusieurs champs qui sont obligatoires"
-                }
-            }
-        }, 422
+        return Error422OneOrMoreMissingField
 
-    # Stocker shipping_information comme JSON string
     order.email = email
-    new_shipping_information = Shipping_information(shipping_info)
+    new_shipping_information = Shipping_information.from_dict(shipping_info)
     new_shipping_information.save()
     order.shipping_information = new_shipping_information.id
-    #order.shipping_information = json.dumps(shipping_info)
 
     # Calcul prix total + taxes + expédition
     product = order.product
@@ -154,22 +129,6 @@ def update_order(order_id):
 
     order.save()
 
-    return {
-        "order": {
-            "id": order.id,
-            "email": order.email,
-            "shipping_information": new_shipping_information.load_object_to_json(),
-            "credit_card": json.loads(order.credit_card) if order.credit_card else {},
-            "transaction": json.loads(order.transaction) if order.transaction else {},
-            "paid": order.paid,
-            "product": {
-                "id": product.id,
-                "quantity": order.quantity
-            },
-            "shipping_price": order.shipping_price,
-            "total_price": order.total_price,
-            "total_price_tax": order.total_price_tax
-        }
-    }, 200
+    return order.load_object_to_json(), 200
 
 app.run(debug=True)

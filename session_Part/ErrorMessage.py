@@ -23,3 +23,12 @@ Error422ProductOutOfInventory = {
                     }
                 }
             }, 422
+
+Error422OneOrMoreMissingField = {
+            "errors": {
+                "order": {
+                    "code": "missing-fields",
+                    "name": "Il manque un ou plusieurs champs qui sont obligatoires"
+                }
+            }
+        }, 422

@@ -16,3 +16,22 @@ class Order(BaseModel):
     credit_card = TextField(null=True)
     shipping_information = ForeignKeyField(Shipping_information, backref="orders", null=True, default=None)
     transaction = TextField(null=True)
+
+    def load_object_to_json(self):
+        return {
+                   "order": {
+                       "id": self.id,
+                       "total_price": self.total_price,
+                       "total_price_tax": self.total_price_tax,
+                       "email": self.email,
+                       "credit_card": json.loads(self.credit_card) if self.credit_card else {},
+                       "shipping_information": Shipping_information.get(Shipping_information.id == self.shipping_information).load_object_to_json() if self.shipping_information is not None else {},
+                       "transaction": json.loads(self.transaction) if self.transaction else {},
+                       "paid": self.paid,
+                       "product": {
+                           "id": self.product.id,
+                           "quantity": self.quantity
+                       },
+                       "shipping_price": self.shipping_price
+                   }
+               }
