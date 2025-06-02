@@ -70,29 +70,34 @@ def get_products():
 def create_order():
     data = request.get_json()
 
-    # Vérification de l'objet "product"
     if not data or "product" not in data:
+        logger.warning("Données manquantes ou clé 'product' absente dans le payload.")
         return Error422OrderNeedProduct
 
     product_data = data["product"]
     if "id" not in product_data or "quantity" not in product_data:
+        logger.warning("Clés 'id' ou 'quantity' manquantes dans 'product'.")
         return Error422OrderNeedProduct
 
     product_id = product_data["id"]
     quantity = product_data["quantity"]
 
     if quantity < 1:
+        logger.warning(f"Quantité invalide ({quantity}) pour le produit {product_id}.")
         return Error422OrderNeedProduct
 
     try:
         product = Product.get(Product.id == product_id)
     except Product.DoesNotExist:
+        logger.warning(f"Produit avec ID {product_id} non trouvé.")
         return Error422OrderDoesNotExist
 
     if not product.in_stock:
+        logger.info(f"Produit {product.name} (ID {product.id}) hors stock.")
         return Error422ProductOutOfInventory
 
     order = Order.create(product=product, quantity=quantity, shipping_price=product.price)
+    logger.info(f"Commande {order.id} créée avec succès pour le produit {product.name} (ID {product.id}), quantité {quantity}.")
     return redirect(f"/order/{order.id}", code=302)
 
 @app.route("/order/<int:order_id>", methods=["GET"])
@@ -100,18 +105,24 @@ def get_order(order_id):
     try:
         order = Order.get_by_id(order_id)
     except Order.DoesNotExist:
+        logger.warning(f"Commande {order_id} non trouvée.")
         return {"error": "Commande non trouvée"}, 404
 
+    logger.info(f"Commande {order_id} récupérée avec succès.")
     return order.load_object_to_json() , 200
 
 @app.route("/order/<int:order_id>", methods=["PUT"])
 def update_order(order_id):
     data = request.get_json()
+    if not data:
+        logger.warning(f"Aucun JSON reçu pour la commande {order_id}")
+        return Error422NonCompliantFields
 
     # Trouver la commande
     try:
         order = Order.get_by_id(order_id)
     except Order.DoesNotExist:
+        logger.warning(f"Commande {order_id} non trouvée.")
         return {"error": "Commande non trouvée"}, 404
 
     # cas ajout information client
@@ -127,18 +138,23 @@ def update_order(order_id):
         ]
 
         if not email and (not shipping_info or missing_fields):
+            logger.warning(f"Champs requis manquants pour la commande {order_id}: {missing_fields}")
             return Error422OneOrMoreMissingField
 
         if shipping_info and missing_fields:
+            logger.warning(f"Infos de livraison incomplètes pour la commande {order_id}: {missing_fields}")
             return Error422OneOrMoreMissingField
 
         if email:
             if order.is_valid_email(email):
+                logger.info(f"Email mis à jour pour la commande {order_id}: {email}")
                 order.email = email
             else:
+                logger.warning(f"Format d'email invalide pour la commande {order_id}: {email}")
                 return Error422InvalidEmailformat
 
         if shipping_info:
+            logger.info(f"Infos de livraison ajoutées pour la commande {order_id}")
             new_shipping_information = Shipping_information.from_dict(shipping_info)
             new_shipping_information.save()
             order.shipping_information = new_shipping_information
@@ -171,19 +187,26 @@ def update_order(order_id):
                 }
                 tax_rate = taxes.get(province.upper(), 0)
                 order.total_price_tax = round(total_price * (1 + tax_rate), 2)
+                logger.info(f"Taxe appliquée pour {province} sur la commande {order_id}: {tax_rate * 100}%")
             else:
+                logger.warning(f"Province invalide '{province}' pour la commande {order_id}")
                 return Error422Invalidprovincevalue
         order.save()
+        logger.info(f"Infos client enregistrées avec succès pour la commande {order_id}")
 
     #cas paiment par carte
     elif "credit_card" in data:
+        logger.info(f"Paiement par carte pour la commande {order_id}")
         if "order" in data:
+            logger.warning(f"Conflit : données carte + infos client fournies pour la commande {order_id}")
             return Error422CanNotGiveCardAndShippingInfoOrEmail
 
         if order.paid:
+            logger.warning(f"Commande {order_id} déjà payée.")
             return Error422OrderAlreadyBuy
 
         if not order.email or not order.shipping_information:
+            logger.warning(f"Impossible de payer la commande {order_id} sans email et infos livraison.")
             return Error422NeedShippingInfoBeforCreditCard
 
         credit_card = data["credit_card"]
@@ -205,6 +228,7 @@ def update_order(order_id):
         try:
             with urllib.request.urlopen(req) as response:
                 payment_response = json.loads(response.read().decode())
+                logger.info(f"Paiement réussi pour la commande {order_id} - {amount_charged} cents")
                 order.paid = True
                 new_credit_card = CreditCard.from_dict(payment_response["credit_card"])
                 new_credit_card.save()
@@ -215,10 +239,13 @@ def update_order(order_id):
                 order.save()
         except urllib.error.HTTPError as e:
             error_response = json.loads(e.read().decode())
+            logger.error(f"Échec du paiement pour la commande {order_id}: {error_response}")
             return error_response, 422
     else:
+        logger.warning(f"Champs invalides ou manquants dans la requête PUT pour la commande {order_id}")
         return Error422NonCompliantFields
 
+    logger.info(f"Mise à jour terminée pour la commande {order_id}")
     return order.load_object_to_json(), 200
 
 app.run(debug=True)
