@@ -1,7 +1,10 @@
 import os
 import urllib
 import click
-from flask import Flask, jsonify, request, redirect, url_for
+import json
+import logging
+import time
+from flask import Flask, jsonify, request, redirect
 from db import db
 from Models.Product import Product
 from Models.Order import Order
@@ -10,10 +13,7 @@ from Models.Transaction import Transaction
 from Models.CreditCard import CreditCard
 from services import fetch_and_store_products
 from ErrorMessage import *
-import json
-import logging
 from logging.handlers import RotatingFileHandler
-import time
 
 app = Flask(__name__)
 
