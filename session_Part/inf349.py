@@ -1,3 +1,4 @@
+import os
 import urllib
 import click
 from flask import Flask, jsonify, request, redirect, url_for
@@ -10,8 +11,24 @@ from Models.CreditCard import CreditCard
 from services import fetch_and_store_products
 from ErrorMessage import *
 import json
+import logging
+from logging.handlers import RotatingFileHandler
+import time
 
 app = Flask(__name__)
+
+os.makedirs("../logs", exist_ok=True)
+log_path = os.path.join("../logs", "api.log")
+handler = RotatingFileHandler(log_path, maxBytes=10*1024*1024, backupCount=5, encoding="utf-8")
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s',
+    handlers=[
+        handler,
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 @app.cli.command("init-db")
 def init_db():
@@ -19,6 +36,19 @@ def init_db():
     db.create_tables([Product, Order, Shipping_information, Transaction, CreditCard])
     fetch_and_store_products()
     click.echo("Base de données initialisée avec succès.")
+
+@app.before_request
+def log_request_info():
+    request.start_time = time.time()
+    logger.info(f"Requête entrante: {request.method} {request.path} - IP: {request.remote_addr}")
+    if request.method in ["POST", "PUT"]:
+        logger.debug(f"Payload: {request.get_json(silent=True)}")
+
+@app.after_request
+def log_response_info(response):
+    duration = round((time.time() - request.start_time) * 1000, 2)
+    logger.info(f"Réponse {request.method} {request.path} - {response.status_code} en {duration}ms")
+    return response
 
 @app.route("/", methods=["GET"])
 def get_products():
