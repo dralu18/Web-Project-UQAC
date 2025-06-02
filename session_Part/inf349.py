@@ -96,7 +96,7 @@ def create_order():
         logger.info(f"Produit {product.name} (ID {product.id}) hors stock.")
         return Error422ProductOutOfInventory
 
-    order = Order.create(product=product, quantity=quantity, shipping_price=product.price)
+    order = Order.create(product=product, quantity=quantity, total_price=product.price * quantity, shipping_price=product.calculate_weight(quantity))
     logger.info(f"Commande {order.id} créée avec succès pour le produit {product.name} (ID {product.id}), quantité {quantity}.")
     return redirect(f"/order/{order.id}", code=302)
 
@@ -159,22 +159,6 @@ def update_order(order_id):
             new_shipping_information.save()
             order.shipping_information = new_shipping_information
 
-            # Calcul du prix
-            product = order.product
-            quantity = order.quantity
-            total_price = int(product.price * quantity)
-            order.total_price = total_price
-
-            # Calcul des frais de port
-            weight = product.weight * quantity
-            if weight <= 500:
-                shipping_price = 500
-            elif weight <= 2000:
-                shipping_price = 1000
-            else:
-                shipping_price = 2500
-            order.shipping_price = shipping_price
-
             # Taxe selon province
             province = new_shipping_information.province
             if order.is_valid_province(province):
@@ -186,7 +170,7 @@ def update_order(order_id):
                     "NS": 0.14
                 }
                 tax_rate = taxes.get(province.upper(), 0)
-                order.total_price_tax = round(total_price * (1 + tax_rate), 2)
+                order.total_price_tax = round(order.total_price * (1 + tax_rate), 2)
                 logger.info(f"Taxe appliquée pour {province} sur la commande {order_id}: {tax_rate * 100}%")
             else:
                 logger.warning(f"Province invalide '{province}' pour la commande {order_id}")

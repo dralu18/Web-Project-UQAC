@@ -12,3 +12,13 @@ class Product(BaseModel):
     price = FloatField()
     in_stock = BooleanField()
 
+    def calculate_weight(self, quantity:int):
+        # Calcul des frais de port
+        total_weight = self.weight * quantity
+        if total_weight <= 500:
+            return 500
+        elif total_weight <= 2000:
+            return 1000
+        else:
+            return 2500
+
