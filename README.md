@@ -9,6 +9,7 @@ Lorsque cela est fait, il ne reste plus qu'à utiliser l'API.
 
 ### Lancement des test
 
+Se mettre a la recine du projet et exécuter la commande pytest
 
 ## Comment lancer l'application sous Linux
 
@@ -18,4 +19,6 @@ puis l'exécuter
 Lorsque cela est fait, il ne reste plus qu'à utiliser l'API.
 
 ### Lancement des test
+
+Se mettre à la racine du projet et exécuter la commande pytest
 

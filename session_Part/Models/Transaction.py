@@ -2,7 +2,7 @@ from peewee import *
 from session_Part.Models.BaseModel import BaseModel
 
 class Transaction(BaseModel):
-    id = CharField(unique=True)
+    id = CharField(unique=True, primary_key=True)
     success = BooleanField()
     amount_charged = IntegerField()
 

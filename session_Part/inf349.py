@@ -18,6 +18,7 @@ from session_Part.ErrorMessage import *
 from logging.handlers import RotatingFileHandler
 
 global app
+
 app = Flask(__name__)
 
 app.config["DATABASE"] = os.path.join(os.path.dirname(__file__), 'Bat_File', 'shop.db')
@@ -243,4 +244,5 @@ def update_order(order_id):
     logger.info(f"Mise à jour terminée pour la commande {order_id}")
     return order.load_object_to_json(), 200
 
-app.run(debug=True)
+if __name__ == "__main__":
+    app.run(debug=True)

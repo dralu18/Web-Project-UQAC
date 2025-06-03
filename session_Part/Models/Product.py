@@ -13,6 +13,8 @@ class Product(BaseModel):
     in_stock = BooleanField()
 
     def calculate_weight(self, quantity:int):
+        if not isinstance(quantity, int):
+            raise TypeError("Quantity must be an integer")
         # Calcul des frais de port
         total_weight = self.weight * quantity
         if total_weight <= 500:
