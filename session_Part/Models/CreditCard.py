@@ -1,5 +1,5 @@
 from peewee import *
-from Models.BaseModel import BaseModel
+from session_Part.Models.BaseModel import BaseModel
 
 class CreditCard(BaseModel):
     id = AutoField()

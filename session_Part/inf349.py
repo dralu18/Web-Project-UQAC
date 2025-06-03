@@ -1,24 +1,35 @@
 import os
 import urllib
+from sys import path
+
 import click
 import json
 import logging
 import time
 from flask import Flask, jsonify, request, redirect
-from db import db
-from Models.Product import Product
-from Models.Order import Order
-from Models.Shipping_information import Shipping_information
-from Models.Transaction import Transaction
-from Models.CreditCard import CreditCard
-from services import fetch_and_store_products
-from ErrorMessage import *
+from session_Part.db import db
+from session_Part.Models.Product import Product
+from session_Part.Models.Order import Order
+from session_Part.Models.Shipping_information import Shipping_information
+from session_Part.Models.Transaction import Transaction
+from session_Part.Models.CreditCard import CreditCard
+from session_Part.services import fetch_and_store_products
+from session_Part.ErrorMessage import *
 from logging.handlers import RotatingFileHandler
 
+global app
 app = Flask(__name__)
 
-os.makedirs("../logs", exist_ok=True)
-log_path = os.path.join("../logs", "api.log")
+app.config["DATABASE"] = os.path.join(os.path.dirname(__file__), 'Bat_File', 'shop.db')
+
+
+db.init(app.config["DATABASE"])
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+logs_dir = os.path.join(BASE_DIR, "logs")
+os.makedirs(logs_dir, exist_ok=True)
+
+log_path = os.path.join(logs_dir, "api.log")
 handler = RotatingFileHandler(log_path, maxBytes=10*1024*1024, backupCount=5, encoding="utf-8")
 logging.basicConfig(
     level=logging.INFO,

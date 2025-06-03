@@ -1,7 +1,7 @@
 import json
 from urllib.request import urlopen
-from Models.Product import Product
-from db import db
+from session_Part.Models.Product import Product
+from session_Part.db import db
 
 def fetch_and_store_products():
     url = "https://dimensweb.uqac.ca/~jgnault/shops/products/"

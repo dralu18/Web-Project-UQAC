@@ -1,5 +1,5 @@
 from peewee import *
-from Models.BaseModel import BaseModel
+from session_Part.Models.BaseModel import BaseModel
 
 class Transaction(BaseModel):
     id = CharField(unique=True)

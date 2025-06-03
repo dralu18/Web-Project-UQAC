@@ -1,9 +1,9 @@
 from peewee import *
-from Models.BaseModel import BaseModel
-from Models.Product import Product
-from Models.Shipping_information import Shipping_information
-from Models.Transaction import Transaction
-from Models.CreditCard import CreditCard
+from session_Part.Models.BaseModel import BaseModel
+from session_Part.Models.Product import Product
+from session_Part.Models.Shipping_information import Shipping_information
+from session_Part.Models.Transaction import Transaction
+from session_Part.Models.CreditCard import CreditCard
 import json
 import re
 
