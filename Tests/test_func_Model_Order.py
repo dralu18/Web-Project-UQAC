@@ -23,7 +23,6 @@ def sample_order():
 
 
 def test_load_object_to_json_basic(sample_order):
-    # Test avec les données de base, sans carte de crédit, shipping ou transaction
     result = sample_order.load_object_to_json()
 
     assert isinstance(result, dict)
@@ -44,7 +43,6 @@ def test_load_object_to_json_basic(sample_order):
 
 
 def test_load_object_to_json_full(sample_order):
-    # Test avec toutes les informations (carte de crédit, shipping, transaction)
     credit_card = CreditCard(
         name="John Doe",
         first_digits=4532,
@@ -81,12 +79,10 @@ def test_load_object_to_json_full(sample_order):
 def test_is_valid_email():
     order = Order()
 
-    # Tests valides
     assert order.is_valid_email("test@example.com") is True
     assert order.is_valid_email("user.name@domain.co.uk") is True
     assert order.is_valid_email("user-name@domain.com") is True
 
-    # Tests invalides
     assert order.is_valid_email("test@") is False
     assert order.is_valid_email("test@.com") is False
     assert order.is_valid_email("@domain.com") is False
@@ -99,7 +95,6 @@ def test_is_valid_email():
 def test_is_valid_province():
     order = Order()
 
-    # Tests valides (insensible à la casse)
     assert order.is_valid_province("QC") is True
     assert order.is_valid_province("qc") is True
     assert order.is_valid_province("ON") is True
@@ -107,7 +102,6 @@ def test_is_valid_province():
     assert order.is_valid_province("BC") is True
     assert order.is_valid_province("NS") is True
 
-    # Tests invalides
     assert order.is_valid_province("QB") is False
     assert order.is_valid_province("") is False
     assert order.is_valid_province(None) is False

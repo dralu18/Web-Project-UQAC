@@ -1,7 +1,5 @@
 import os
 import urllib
-from sys import path
-
 import click
 import json
 import logging
